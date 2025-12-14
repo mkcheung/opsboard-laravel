@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: opsboard-laravel-app
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    ports:
+      - "8000:8000"
+    networks:
+      - opsboard_net
+    command: >
+      sh -c "composer install &&
+             php artisan key:generate --force &&
+             php artisan serve --host=0.0.0.0 --port=8000"
+
+networks:
+  opsboard_net:
+    external: true
+    name: opsboard_net
