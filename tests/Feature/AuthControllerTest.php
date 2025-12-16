@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\AuthController;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -137,5 +138,96 @@ class AuthControllerTest extends TestCase
         $this->assertSame($responseData['user']['id'], $user->id);
         $this->assertSame($responseData['user']['name'], $user->name);
         $this->assertSame($responseData['user']['email'], $user->email);
+    }
+
+    public function test_login_missing_email():void{
+        $this->expectException(ValidationException::class);
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+        $user->save();
+        $request = Request::create(
+            'api/auth/login',
+            'POST',
+            [
+                'email' => '',
+                'password' => $unhashedPassword
+            ]
+        );
+        $response = $this->authController->login($request);
+    }
+
+    public function test_login_missing_password():void{
+        $unhashedPassword = 'testing123';
+        $hashedPassword = Hash::make($unhashedPassword);
+        $user = User::factory()->create([
+            'password' => $hashedPassword
+        ]);
+        $user->save();
+
+        $this->expectException(ValidationException::class);
+        $request = Request::create(
+            'api/auth/login',
+            'POST',
+            [
+                'email' => $user->email,
+                'password' => $hashedPassword
+            ]
+        );
+        $response = $this->authController->login($request);
+    }
+
+    public function test_login_nonexistent_user():void{
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+        $user->save();
+
+        $this->expectException(ValidationException::class);
+        $request = Request::create(
+            'api/auth/login',
+            'POST',
+            [
+                'email' => 'doesntexist@gmail.com',
+                'password' => 'doesntexist'
+            ]
+        );
+        $response = $this->authController->login($request);
+    }
+
+    public function test_logout():void{
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+        $token = $user->createToken('api')->plainTextToken;
+        $user->save();
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('api/auth/logout')
+            ->assertOk()
+            ->assertJson([
+                'ok' => true
+            ]);
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_me():void{
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+        $user->save();
+        Sanctum::actingAs($user);
+
+        $this->getJson('api/me')
+            ->assertOk()
+            ->assertJson([
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+            ]);
     }
 }
