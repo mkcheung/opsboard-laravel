@@ -4,19 +4,25 @@ namespace App\Models;
 
 use App\Models\User;
 use App\Models\Task;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
-        'description'
+        'description',
+        'user_id'
     ];
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
-    public function task(){
+    public function task()
+    {
         return $this->hasMany(Task::class);
     }
 }

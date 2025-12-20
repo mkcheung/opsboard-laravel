@@ -42,7 +42,6 @@ class AuthControllerTest extends TestCase
         );
 
         $response = $this->authController->register($request);
-        // die($response);
         $this->assertSame(201, $response->getStatusCode());
         $responseData = $response->getData(true);
         $this->assertArrayHasKey('token', $responseData);
@@ -53,7 +52,8 @@ class AuthControllerTest extends TestCase
         $this->assertSame('test123@example.com', $responseData['user']['email']);
     }
 
-    public function test_missing_field_name(): void {
+    public function test_missing_field_name(): void
+    {
         $this->expectException(ValidationException::class);
         $request = Request::create(
             'api/auth/register',
@@ -64,11 +64,12 @@ class AuthControllerTest extends TestCase
                 'password' => 'testing123',
                 'password_confirm' => 'testing123'
             ]
-            );
-            $response = $this->authController->register($request);
+        );
+        $response = $this->authController->register($request);
     }
 
-    public function test_missing_field_email(): void {
+    public function test_missing_field_email(): void
+    {
         $this->expectException(ValidationException::class);
         $request = Request::create(
             'api/auth/register',
@@ -79,11 +80,12 @@ class AuthControllerTest extends TestCase
                 'password' => 'testing123',
                 'password_confirm' => 'testing123'
             ]
-            );
-            $response = $this->authController->register($request);
+        );
+        $response = $this->authController->register($request);
     }
 
-    public function test_missing_field_password(): void {
+    public function test_missing_field_password(): void
+    {
         $this->expectException(ValidationException::class);
         $request = Request::create(
             'api/auth/register',
@@ -94,11 +96,12 @@ class AuthControllerTest extends TestCase
                 'password' => '',
                 'password_confirm' => 'testing123'
             ]
-            );
-            $response = $this->authController->register($request);
+        );
+        $response = $this->authController->register($request);
     }
 
-    public function test_missing_field_password_confirm(): void {
+    public function test_missing_field_password_confirm(): void
+    {
         $this->expectException(ValidationException::class);
         $request = Request::create(
             'api/auth/register',
@@ -109,11 +112,12 @@ class AuthControllerTest extends TestCase
                 'password' => 'testing123',
                 'password_confirm' => ''
             ]
-            );
-            $response = $this->authController->register($request);
+        );
+        $response = $this->authController->register($request);
     }
 
-    public function test_login():void{
+    public function test_login(): void
+    {
         $unhashedPassword = 'testing123';
         $user = User::factory()->create([
             'password' => Hash::make($unhashedPassword)
@@ -140,7 +144,8 @@ class AuthControllerTest extends TestCase
         $this->assertSame($responseData['user']['email'], $user->email);
     }
 
-    public function test_login_missing_email():void{
+    public function test_login_missing_email(): void
+    {
         $this->expectException(ValidationException::class);
         $unhashedPassword = 'testing123';
         $user = User::factory()->create([
@@ -158,7 +163,8 @@ class AuthControllerTest extends TestCase
         $response = $this->authController->login($request);
     }
 
-    public function test_login_missing_password():void{
+    public function test_login_missing_password(): void
+    {
         $unhashedPassword = 'testing123';
         $hashedPassword = Hash::make($unhashedPassword);
         $user = User::factory()->create([
@@ -178,7 +184,8 @@ class AuthControllerTest extends TestCase
         $response = $this->authController->login($request);
     }
 
-    public function test_login_nonexistent_user():void{
+    public function test_login_nonexistent_user(): void
+    {
         $unhashedPassword = 'testing123';
         $user = User::factory()->create([
             'password' => Hash::make($unhashedPassword)
@@ -197,7 +204,8 @@ class AuthControllerTest extends TestCase
         $response = $this->authController->login($request);
     }
 
-    public function test_logout():void{
+    public function test_logout(): void
+    {
         $unhashedPassword = 'testing123';
         $user = User::factory()->create([
             'password' => Hash::make($unhashedPassword)
@@ -205,7 +213,7 @@ class AuthControllerTest extends TestCase
         $token = $user->createToken('api')->plainTextToken;
         $user->save();
         $this->assertDatabaseCount('personal_access_tokens', 1);
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('api/auth/logout')
             ->assertOk()
             ->assertJson([
@@ -214,7 +222,8 @@ class AuthControllerTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
-    public function test_me():void{
+    public function test_me(): void
+    {
         $unhashedPassword = 'testing123';
         $user = User::factory()->create([
             'password' => Hash::make($unhashedPassword)
