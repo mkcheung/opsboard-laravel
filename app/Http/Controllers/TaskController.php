@@ -106,21 +106,21 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
-        if ($request->user()->id == $task->user_ud) {
+        if ($request->user()->id !== $task->user_id) {
             return response()->json([
                 'message' => 'Forbidden'
             ], 403);
         }
         $data = $request->validate([
-            'project_id' => ['required', 'integer'],
-            'title' => ['required', 'string', 'max:140'],
+            'project_id' => ['sometimes', 'integer'],
+            'title' => ['sometimes', 'string', 'max:140'],
             'description' => ['nullable', 'string', 'max:1000'],
             'status' => [
-                'required',
+                'sometimes',
                 Rule::in(['todo', 'doing', 'done']),
             ],
             'priority' => [
-                'required',
+                'sometimes',
                 Rule::in(['low', 'medium', 'high']),
             ],
             'due_date' => [

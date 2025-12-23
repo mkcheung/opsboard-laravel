@@ -2,15 +2,17 @@
 
 namespace Tests\Feature;
 
+use Carbon\Carbon;
 use Tests\TestCase;
+use App\Models\Task;
 use App\Models\User;
 use App\Models\Project;
-use App\Models\Task;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\TaskController;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
@@ -77,5 +79,147 @@ class TaskControllerTest extends TestCase
         $this->assertSame("2025-12-28", $data['task']['completed_at']);
     }
 
-    public function test_show(): void {}
+    public function test_show(): void
+    {
+        $taskToCreate = Task::factory()->make();
+        $inputData = $taskToCreate->toArray();
+        $taskToCreate->save();
+
+        $response = $this->taskController->show($taskToCreate->id);
+        $this->assertSame(200, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertSame($inputData['user_id'], $data['task']['user_id']);
+        $this->assertSame($inputData['project_id'], $data['task']['project_id']);
+        $this->assertSame($inputData['title'], $data['task']['title']);
+        $this->assertSame($inputData['description'], $data['task']['description']);
+        $this->assertSame($inputData['status'], $data['task']['status']);
+        $this->assertSame($inputData['priority'], $data['task']['priority']);
+        $this->assertSame($inputData['due_date'], $data['task']['due_date']);
+        $this->assertSame($inputData['estimate_minutes'], $data['task']['estimate_minutes']);
+    }
+
+    public function test_show_invalid_id(): void
+    {
+        $response = $this->taskController->show('faulty');
+        $this->assertSame(400, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertSame('Invalid Task Id', $data['message']);
+    }
+
+    public function test_show_nonexistent_task(): void
+    {
+        $nonexistentTaskId = Task::max('id') + 1;
+        $response = $this->taskController->show($nonexistentTaskId);
+        $this->assertSame(400, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertSame('Task not found', $data['message']);
+    }
+
+    public function test_update(): void
+    {
+        $taskToCreate = Task::factory()->make();
+        $originalInputData = $taskToCreate->toArray();
+        $user = User::find($originalInputData['user_id']);
+        $taskToCreate->save();
+        $request = Request::create(
+            "api/tasks/{$taskToCreate->id}",
+            "PUT",
+            [
+                'description' => 'New Description'
+            ]
+        );
+
+        $request->setUserResolver(fn() => $user);
+        $response = $this->taskController->update($request, $taskToCreate);
+        $this->assertSame(200, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertSame($originalInputData['title'], $data['task']['title']);
+        $this->assertSame('New Description', $data['task']['description']);
+    }
+
+    public function test_update_invalid_user(): void
+    {
+        $taskToCreate = Task::factory()->make();
+        $originalInputData = $taskToCreate->toArray();
+        $user = User::find($originalInputData['user_id']);
+        $taskToCreate->save();
+        $request = Request::create(
+            "api/tasks/{$taskToCreate->id}",
+            "PUT",
+            [
+                'description' => 'New Description'
+            ]
+        );
+
+        $request->setUserResolver(fn() => $this->user);
+        $response = $this->taskController->update($request, $taskToCreate);
+        $this->assertSame(403, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertSame('Forbidden', $data['message']);
+    }
+
+    public function test_update_invalid_priority(): void
+    {
+        $this->expectException(ValidationException::class);
+        $taskToCreate = Task::factory()->make();
+        $originalInputData = $taskToCreate->toArray();
+        $user = User::find($originalInputData['user_id']);
+        $taskToCreate->save();
+        $request = Request::create(
+            "api/tasks/{$taskToCreate->id}",
+            "PUT",
+            [
+                'priority' => 'none'
+            ]
+        );
+
+        $request->setUserResolver(fn() => $user);
+        $response = $this->taskController->update($request, $taskToCreate);
+    }
+
+    public function test_update_invalid_status(): void
+    {
+        $this->expectException(ValidationException::class);
+        $taskToCreate = Task::factory()->make();
+        $originalInputData = $taskToCreate->toArray();
+        $user = User::find($originalInputData['user_id']);
+        $taskToCreate->save();
+        $request = Request::create(
+            "api/tasks/{$taskToCreate->id}",
+            "PUT",
+            [
+                'status' => 'none'
+            ]
+        );
+
+        $request->setUserResolver(fn() => $user);
+        $response = $this->taskController->update($request, $taskToCreate);
+    }
+
+    public function test_destroy(): void
+    {
+        $task = Task::factory()->create();
+        $user = User::find($task->user_id);
+        $request = Request::create(
+            "api/tasks/{$task->id}",
+            'DELETE'
+        );
+        $request->setUserResolver(fn() => $user);
+        $res = $this->taskController->destroy($request, $task->id);
+        $this->assertSame(204, $res->getStatusCode());
+    }
+
+    public function test_destroy_with_invalid_user(): void
+    {
+        $this->expectException(ModelNotFoundException::class);
+        $task = Task::factory()->create();
+        $user = User::find($task->user_id);
+        $request = Request::create(
+            "api/tasks/{$task->id}",
+            'DELETE'
+        );
+        $request->setUserResolver(fn() => $this->user);
+        $res = $this->taskController->destroy($request, $task->id);
+        $this->assertSame(204, $res->getStatusCode());
+    }
 }
