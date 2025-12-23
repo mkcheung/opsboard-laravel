@@ -70,7 +70,7 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
-        if ($request->user()->id == $project->user_ud) {
+        if ($request->user()->id !== $project->user_id) {
             return response()->json([
                 'message' => 'Forbidden'
             ], 403);

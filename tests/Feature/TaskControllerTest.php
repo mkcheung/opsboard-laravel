@@ -21,7 +21,7 @@ class TaskControllerTest extends TestCase
 
     use DatabaseMigrations;
     protected TaskController $taskController;
-    protected $user;
+    protected User $user;
 
     public function setUp(): void
     {
@@ -207,6 +207,20 @@ class TaskControllerTest extends TestCase
         $request->setUserResolver(fn() => $user);
         $res = $this->taskController->destroy($request, $task->id);
         $this->assertSame(204, $res->getStatusCode());
+    }
+
+    public function test_delete_task_invalid_task(): void
+    {
+        $this->expectException(ModelNotFoundException::class);
+        $task = Task::factory()->create();
+        $user = User::find($task->user_id);
+        $request = Request::create(
+            "api/tasks/{$task->id}",
+            'DELETE',
+        );
+        $request->setUserResolver(fn() => $this->user);
+        $invalidId = Task::max('id') + 1;
+        $this->taskController->destroy($request, $invalidId);
     }
 
     public function test_destroy_with_invalid_user(): void
