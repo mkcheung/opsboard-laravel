@@ -65,6 +65,7 @@ class TaskController extends Controller
         return response()->json([
             'task' => [
                 'id' => $task->id,
+                'user_id' => $task->user_id,
                 'project_id' => $task->project_id,
                 'title' => $task->title,
                 'description' => $task->description,
