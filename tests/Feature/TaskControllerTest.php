@@ -76,4 +76,6 @@ class TaskControllerTest extends TestCase
         $this->assertSame(60, $data['task']['estimate_minutes']);
         $this->assertSame("2025-12-28", $data['task']['completed_at']);
     }
+
+    public function test_show(): void {}
 }
