@@ -45,19 +45,20 @@ class ProjectController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, int $id)
     {
-        if (!ctype_digit($id)) {
-            return response()->json([
-                'message' => 'Invalid Project Id'
-            ], 400);
-        }
         $project = Project::where('id', $id)->first();
 
         if (!$project) {
             return response()->json([
                 'message' => 'Project not found'
-            ], 400);
+            ], 404);
+        }
+
+        if ($request->user()->id !== $project->user_id) {
+            return response()->json([
+                'message' => 'Forbidden'
+            ], 403);
         }
 
         return response()->json([
@@ -91,7 +92,7 @@ class ProjectController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, int $id)
     {
         $project = Project::where('id', $id)
             ->where('user_id', $request->user()->id)

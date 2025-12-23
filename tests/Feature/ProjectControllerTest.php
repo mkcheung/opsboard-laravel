@@ -82,7 +82,12 @@ class ProjectControllerTest extends TestCase
             'user_id' => $user->id
         ]);
 
-        $response = $this->projectController->show($project->id);
+        $request = Request::create(
+            "api/projects/{$project->id}",
+            'GET'
+        );
+        $request->setUserResolver(fn() => $user);
+        $response = $this->projectController->show($request, $project->id);
         $this->assertEquals(200, $response->getStatusCode());
         $data = $response->getData(true);
         $this->assertArrayHasKey('project', $data);
@@ -91,31 +96,22 @@ class ProjectControllerTest extends TestCase
         $this->assertEquals($project->id, $data['project']['id']);
     }
 
-    public function test_show_invalid_id(): void
-    {
-        $unhashedPassword = 'testing123';
-        $user = User::factory()->create([
-            'password' => Hash::make($unhashedPassword)
-        ]);
-        $project = Project::factory()->create([
-            'user_id' => $user->id
-        ]);
-
-        $response = $this->projectController->show('a');
-        $this->assertEquals(400, $response->getStatusCode());
-        $data = $response->getData(true);
-        $this->assertEquals('Invalid Project Id', $data['message']);
-    }
-
     public function test_show_non_existent_project(): void
     {
         $unhashedPassword = 'testing123';
         $user = User::factory()->create([
             'password' => Hash::make($unhashedPassword)
         ]);
+        $project = Project::factory()->create();
         $nonExistentId = Project::max('id') + 1;
-        $response = $this->projectController->show($nonExistentId);
-        $this->assertEquals(400, $response->getStatusCode());
+        $request = Request::create(
+            "api/projects/{$nonExistentId}",
+            'GET'
+        );
+
+        $request->setUserResolver(fn() => $user);
+        $response = $this->projectController->show($request, $nonExistentId);
+        $this->assertEquals(404, $response->getStatusCode());
         $data = $response->getData(true);
         $this->assertEquals('Project not found', $data['message']);
     }

@@ -81,19 +81,21 @@ class TaskController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, int $id)
     {
-        if (!ctype_digit($id)) {
-            return response()->json([
-                'message' => 'Invalid Task Id'
-            ], 400);
-        }
+
         $task = Task::where('id', $id)->first();
 
         if (!$task) {
             return response()->json([
                 'message' => 'Task not found'
             ], 400);
+        }
+
+        if ($request->user()->id !== $task->user_id) {
+            return response()->json([
+                'message' => 'Forbidden'
+            ], 403);
         }
 
         return response()->json([
@@ -148,7 +150,7 @@ class TaskController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, int $id)
     {
         $task = Task::where('id', $id)
             ->where('user_id', $request->user()->id)

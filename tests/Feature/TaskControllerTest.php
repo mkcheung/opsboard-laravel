@@ -84,8 +84,13 @@ class TaskControllerTest extends TestCase
         $taskToCreate = Task::factory()->make();
         $inputData = $taskToCreate->toArray();
         $taskToCreate->save();
+        $user = User::find($taskToCreate->user_id);
+        $request = Request::create(
+            "api/tasks/{$taskToCreate->id}"
+        );
 
-        $response = $this->taskController->show($taskToCreate->id);
+        $request->setUserResolver(fn() => $user);
+        $response = $this->taskController->show($request, $taskToCreate->id);
         $this->assertSame(200, $response->getStatusCode());
         $data = $response->getData(true);
         $this->assertSame($inputData['user_id'], $data['task']['user_id']);
@@ -98,18 +103,14 @@ class TaskControllerTest extends TestCase
         $this->assertSame($inputData['estimate_minutes'], $data['task']['estimate_minutes']);
     }
 
-    public function test_show_invalid_id(): void
-    {
-        $response = $this->taskController->show('faulty');
-        $this->assertSame(400, $response->getStatusCode());
-        $data = $response->getData(true);
-        $this->assertSame('Invalid Task Id', $data['message']);
-    }
-
     public function test_show_nonexistent_task(): void
     {
         $nonexistentTaskId = Task::max('id') + 1;
-        $response = $this->taskController->show($nonexistentTaskId);
+        $request = Request::create(
+            "api/tasks/{$nonexistentTaskId}"
+        );
+        $request->setUserResolver(fn() => $this->user);
+        $response = $this->taskController->show($request, $nonexistentTaskId);
         $this->assertSame(400, $response->getStatusCode());
         $data = $response->getData(true);
         $this->assertSame('Task not found', $data['message']);
