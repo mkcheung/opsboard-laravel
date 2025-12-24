@@ -14,7 +14,11 @@ class ProjectController extends Controller
     {
         $perPage = min($request->integer('page_size', 10), 100);
         $projects = Project::where('user_id', '=', $request->user()->id)->paginate($perPage);
-        return response()->json($projects);
+
+        return response()->json([
+            'data' => $projects
+        ], 200);
+        return response()->json();
     }
 
     /**
@@ -34,12 +38,8 @@ class ProjectController extends Controller
         ]);
 
         return response()->json([
-            'project' => [
-                'id' => $project->id,
-                'name' => $project->name,
-                'description' => $project->description,
-            ]
-        ], 200);
+            'data' => $project
+        ]);
     }
 
     /**
@@ -62,7 +62,7 @@ class ProjectController extends Controller
         }
 
         return response()->json([
-            'project' => $project
+            'data' => $project
         ]);
     }
 
@@ -85,7 +85,7 @@ class ProjectController extends Controller
         $project->update($data);
 
         return response()->json([
-            'project' => $project
+            'data' => $project
         ]);
     }
 

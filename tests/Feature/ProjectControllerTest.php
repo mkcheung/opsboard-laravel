@@ -47,8 +47,7 @@ class ProjectControllerTest extends TestCase
 
         $response = $this->actingAs($user)->getJson("api/projects?page_size=10");
         $response->assertStatus(200);
-        $jsonRes = $response->json();
-        $this->assertCount(3, $jsonRes['data']);
+        $response->assertJsonCount(3, 'data.data');
     }
 
     public function test_create(): void
@@ -68,6 +67,10 @@ class ProjectControllerTest extends TestCase
         $request->setUserResolver(fn() => $user);
         $response = $this->projectController->store($request);
         $this->assertSame(200, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertSame($user->id, $data['data']['user_id']);
+        $this->assertSame('testing123', $data['data']['name']);
+        $this->assertSame('testing description', $data['data']['description']);
     }
 
     public function test_show(): void
@@ -88,10 +91,10 @@ class ProjectControllerTest extends TestCase
         $response = $this->projectController->show($request, $project->id);
         $this->assertEquals(200, $response->getStatusCode());
         $data = $response->getData(true);
-        $this->assertArrayHasKey('project', $data);
-        $this->assertNotEmpty($data['project']);
-        $this->assertEquals($data['project']['user_id'], $user->id);
-        $this->assertEquals($project->id, $data['project']['id']);
+        $this->assertArrayHasKey('data', $data);
+        $this->assertNotEmpty($data['data']);
+        $this->assertEquals($data['data']['user_id'], $user->id);
+        $this->assertEquals($project->id, $data['data']['id']);
     }
 
     public function test_show_non_existent_project(): void
@@ -131,7 +134,7 @@ class ProjectControllerTest extends TestCase
         $response = $this->projectController->update($request, $projectToCreate);
         $this->assertSame(200, $response->getStatusCode());
         $data = $response->getData(true);
-        $this->assertSame($projectToCreate['name'], $data['project']['name']);
+        $this->assertSame($projectToCreate['name'], $data['data']['name']);
         $this->assertNotSame($projectToCreate['description'], $initialProjectData['description']);
         $this->assertSame($projectToCreate['description'], 'New Project Description');
     }
