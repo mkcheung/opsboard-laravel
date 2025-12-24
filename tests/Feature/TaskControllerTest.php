@@ -45,6 +45,140 @@ class TaskControllerTest extends TestCase
         $this->assertCount(3, $jsonRes['data']);
     }
 
+    public function test_index_search_priority(): void
+    {
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+
+        $t1 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'created_at' => now()->subDays(3),
+        ]);
+
+        $t2 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'created_at' => now()->subDays(2),
+        ]);
+
+        $t3 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'created_at' => now()->subDays(1),
+        ]);
+
+        Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'low',
+            'created_at' => now()
+        ]);
+
+        Task::factory()->create([
+            'user_id' => User::factory(),
+            'priority' => 'high',
+            'created_at' => now()->subDays(10),
+        ]);
+
+        $response = $this->actingAs($user)->getJson("api/tasks?priority=high&sort=created_at&dir=asc&page_size=10");
+        $response->assertJsonCount(3, 'data');
+        $ids = array_column($response->json('data'), 'id');
+        $this->assertSame([$t1->id, $t2->id, $t3->id], $ids);
+    }
+
+    public function test_index_created_date_desc(): void
+    {
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+
+        $t1 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'created_at' => now()->subDays(3),
+        ]);
+
+        $t2 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'created_at' => now()->subDays(2),
+        ]);
+
+        $t3 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'created_at' => now()->subDays(1),
+        ]);
+
+        $response = $this->actingAs($user)->getJson("api/tasks?priority=high&sort=created_at&dir=desc&page_size=10");
+        $response->assertJsonCount(3, 'data');
+        $ids = array_column($response->json('data'), 'id');
+        $this->assertSame([$t3->id, $t2->id, $t1->id], $ids);
+    }
+
+    public function test_index_search_status(): void
+    {
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+
+        $t1 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'status' => 'todo',
+        ]);
+
+        $t2 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'status' => 'done',
+        ]);
+
+        $t3 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'status' => 'done',
+        ]);
+
+        $response = $this->actingAs($user)->getJson("api/tasks?status=todo&priority=high&sort=created_at&dir=desc&page_size=10");
+        $response->assertJsonCount(1, 'data');
+    }
+
+    public function test_index_search_title_desc(): void
+    {
+        $unhashedPassword = 'testing123';
+        $user = User::factory()->create([
+            'password' => Hash::make($unhashedPassword)
+        ]);
+
+        $t1 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'title' => 'Today is busy',
+            'status' => 'todo',
+        ]);
+
+        $t2 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'description' => 'Busy times expected',
+            'status' => 'done',
+        ]);
+
+        $t3 = Task::factory()->create([
+            'user_id' => $user->id,
+            'priority' => 'high',
+            'status' => 'done',
+        ]);
+
+        $response = $this->actingAs($user)->getJson("api/tasks?sort=created_at&dir=desc&search=busy&page_size=10");
+        $response->assertJsonCount(2, 'data');
+    }
+
     public function test_create(): void
     {
         $project = Project::factory()->create();
@@ -74,9 +208,9 @@ class TaskControllerTest extends TestCase
         $this->assertSame('testing description', $data['task']['description']);
         $this->assertSame('done', $data['task']['status']);
         $this->assertSame('medium', $data['task']['priority']);
-        $this->assertSame('2025-12-23', $data['task']['due_date']);
+        $this->assertSame($due_date, $data['task']['due_date']);
         $this->assertSame(60, $data['task']['estimate_minutes']);
-        $this->assertSame("2025-12-28", $data['task']['completed_at']);
+        $this->assertSame($completed_at, $data['task']['completed_at']);
     }
 
     public function test_show(): void

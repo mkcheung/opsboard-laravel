@@ -29,9 +29,7 @@ class ProjectControllerTest extends TestCase
             'password' => Hash::make($unhashedPassword)
         ]);
     }
-    /**
-     * A basic feature test example.
-     */
+
     public function test_index(): void
     {
         $unhashedPassword = 'testing123';

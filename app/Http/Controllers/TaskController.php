@@ -14,7 +14,31 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         $perPage = min($request->integer('page_size', 10), 100);
-        $tasks = Task::where('user_id', '=', $request->user()->id)->paginate($perPage);
+        $allowedSorts = ['due_date', 'priority', 'status', 'created_at'];
+        $allowedDirs = ['asc', 'desc'];
+        $priority = $request->query('priority');
+        $status = $request->query('status');
+        $search = $request->query('search');
+        $sort = $request->query('sort');
+        $dir = $request->query('dir', 'asc');
+        $dir = strtolower($dir) === 'desc' ? 'desc' : 'asc';
+        $tasks = Task::query()
+            ->where('user_id', $request->user()->id)
+            ->when($priority, fn($q) => $q->where('priority', $priority))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when(
+                $search,
+                fn($q) =>
+                $q->where(function ($q) use ($search) {
+                    $q->where('title', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                })
+            )
+            ->when(
+                $sort && in_array($sort, $allowedSorts) && in_array($dir, $allowedDirs),
+                fn($q) => $q->orderBy($sort, $dir)
+            )->paginate($perPage);
+
         return response()->json($tasks);
     }
 
