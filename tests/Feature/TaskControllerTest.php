@@ -41,8 +41,7 @@ class TaskControllerTest extends TestCase
         ]);
         $response = $this->actingAs($this->user)->getJson("api/tasks?page_size=10");
         $response->assertStatus(200);
-        $jsonRes = $response->json();
-        $this->assertCount(3, $jsonRes['data']);
+        $response->assertJsonCount(3, 'data.data');
     }
 
     public function test_index_search_priority(): void
@@ -83,8 +82,8 @@ class TaskControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->getJson("api/tasks?priority=high&sort=created_at&dir=asc&page_size=10");
-        $response->assertJsonCount(3, 'data');
-        $ids = array_column($response->json('data'), 'id');
+        $response->assertJsonCount(3, 'data.data');
+        $ids = array_column($response->json('data.data'), 'id');
         $this->assertSame([$t1->id, $t2->id, $t3->id], $ids);
     }
 
@@ -114,8 +113,8 @@ class TaskControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->getJson("api/tasks?priority=high&sort=created_at&dir=desc&page_size=10");
-        $response->assertJsonCount(3, 'data');
-        $ids = array_column($response->json('data'), 'id');
+        $response->assertJsonCount(3, 'data.data');
+        $ids = array_column($response->json('data.data'), 'id');
         $this->assertSame([$t3->id, $t2->id, $t1->id], $ids);
     }
 
@@ -126,26 +125,26 @@ class TaskControllerTest extends TestCase
             'password' => Hash::make($unhashedPassword)
         ]);
 
-        $t1 = Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $user->id,
             'priority' => 'high',
             'status' => 'todo',
         ]);
 
-        $t2 = Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $user->id,
             'priority' => 'high',
             'status' => 'done',
         ]);
 
-        $t3 = Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $user->id,
             'priority' => 'high',
             'status' => 'done',
         ]);
 
         $response = $this->actingAs($user)->getJson("api/tasks?status=todo&priority=high&sort=created_at&dir=desc&page_size=10");
-        $response->assertJsonCount(1, 'data');
+        $response->assertJsonCount(1, 'data.data');
     }
 
     public function test_index_search_title_desc(): void
@@ -155,28 +154,28 @@ class TaskControllerTest extends TestCase
             'password' => Hash::make($unhashedPassword)
         ]);
 
-        $t1 = Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $user->id,
             'priority' => 'high',
             'title' => 'Today is busy',
             'status' => 'todo',
         ]);
 
-        $t2 = Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $user->id,
             'priority' => 'high',
             'description' => 'Busy times expected',
             'status' => 'done',
         ]);
 
-        $t3 = Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $user->id,
             'priority' => 'high',
             'status' => 'done',
         ]);
 
         $response = $this->actingAs($user)->getJson("api/tasks?sort=created_at&dir=desc&search=busy&page_size=10");
-        $response->assertJsonCount(2, 'data');
+        $response->assertJsonCount(2, 'data.data');
     }
 
     public function test_create(): void
@@ -202,15 +201,15 @@ class TaskControllerTest extends TestCase
         $response = $this->taskController->store($request);
         $this->assertSame(200, $response->getStatusCode());
         $data = $response->getData(true);
-        $this->assertSame($this->user->id, $data['task']['user_id']);
-        $this->assertSame($project->id, $data['task']['project_id']);
-        $this->assertSame('testing', $data['task']['title']);
-        $this->assertSame('testing description', $data['task']['description']);
-        $this->assertSame('done', $data['task']['status']);
-        $this->assertSame('medium', $data['task']['priority']);
-        $this->assertSame($due_date, $data['task']['due_date']);
-        $this->assertSame(60, $data['task']['estimate_minutes']);
-        $this->assertSame($completed_at, $data['task']['completed_at']);
+        $this->assertSame($this->user->id, $data['data']['user_id']);
+        $this->assertSame($project->id, $data['data']['project_id']);
+        $this->assertSame('testing', $data['data']['title']);
+        $this->assertSame('testing description', $data['data']['description']);
+        $this->assertSame('done', $data['data']['status']);
+        $this->assertSame('medium', $data['data']['priority']);
+        $this->assertSame($due_date, $data['data']['due_date']);
+        $this->assertSame(60, $data['data']['estimate_minutes']);
+        $this->assertSame($completed_at, $data['data']['completed_at']);
     }
 
     public function test_show(): void
@@ -227,14 +226,14 @@ class TaskControllerTest extends TestCase
         $response = $this->taskController->show($request, $taskToCreate->id);
         $this->assertSame(200, $response->getStatusCode());
         $data = $response->getData(true);
-        $this->assertSame($inputData['user_id'], $data['task']['user_id']);
-        $this->assertSame($inputData['project_id'], $data['task']['project_id']);
-        $this->assertSame($inputData['title'], $data['task']['title']);
-        $this->assertSame($inputData['description'], $data['task']['description']);
-        $this->assertSame($inputData['status'], $data['task']['status']);
-        $this->assertSame($inputData['priority'], $data['task']['priority']);
-        $this->assertSame($inputData['due_date'], $data['task']['due_date']);
-        $this->assertSame($inputData['estimate_minutes'], $data['task']['estimate_minutes']);
+        $this->assertSame($inputData['user_id'], $data['data']['user_id']);
+        $this->assertSame($inputData['project_id'], $data['data']['project_id']);
+        $this->assertSame($inputData['title'], $data['data']['title']);
+        $this->assertSame($inputData['description'], $data['data']['description']);
+        $this->assertSame($inputData['status'], $data['data']['status']);
+        $this->assertSame($inputData['priority'], $data['data']['priority']);
+        $this->assertSame($inputData['due_date'], $data['data']['due_date']);
+        $this->assertSame($inputData['estimate_minutes'], $data['data']['estimate_minutes']);
     }
 
     public function test_show_nonexistent_task(): void
@@ -268,8 +267,8 @@ class TaskControllerTest extends TestCase
         $response = $this->taskController->update($request, $taskToCreate);
         $this->assertSame(200, $response->getStatusCode());
         $data = $response->getData(true);
-        $this->assertSame($originalInputData['title'], $data['task']['title']);
-        $this->assertSame('New Description', $data['task']['description']);
+        $this->assertSame($originalInputData['title'], $data['data']['title']);
+        $this->assertSame('New Description', $data['data']['description']);
     }
 
     public function test_update_invalid_user(): void

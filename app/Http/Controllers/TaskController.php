@@ -39,7 +39,10 @@ class TaskController extends Controller
                 fn($q) => $q->orderBy($sort, $dir)
             )->paginate($perPage);
 
-        return response()->json($tasks);
+
+        return response()->json([
+            'data' => $tasks
+        ]);
     }
 
     /**
@@ -87,19 +90,8 @@ class TaskController extends Controller
         ]);
 
         return response()->json([
-            'task' => [
-                'id' => $task->id,
-                'user_id' => $task->user_id,
-                'project_id' => $task->project_id,
-                'title' => $task->title,
-                'description' => $task->description,
-                'status' => $task->status,
-                'priority' => $task->priority,
-                'due_date' => $task->due_date,
-                'estimate_minutes' => $task->estimate_minutes,
-                'completed_at' => $task->completed_at
-            ]
-        ], 200);
+            'data' => $task
+        ]);
     }
 
     /**
@@ -123,7 +115,7 @@ class TaskController extends Controller
         }
 
         return response()->json([
-            'task' => $task
+            'data' => $task
         ]);
     }
 
@@ -167,7 +159,7 @@ class TaskController extends Controller
         $task->update($data);
 
         return response()->json([
-            'task' => $task
+            'data' => $task
         ]);
     }
 
