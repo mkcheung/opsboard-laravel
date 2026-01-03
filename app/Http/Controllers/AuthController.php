@@ -12,10 +12,10 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $data = $request->validate([
-            'name'             => ['required','string','max:100'],
-            'email'            => ['required','email','max:255','unique:users,email'],
-            'password'         => ['required','string','min:8'],
-            'password_confirm' => ['required','same:password'],
+            'name'             => ['required', 'string', 'max:100'],
+            'email'            => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password'         => ['required', 'string', 'min:8'],
+            'password_confirm' => ['required', 'same:password'],
         ]);
 
         $user = User::create([
@@ -39,10 +39,9 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $data = $request->validate([
-            'email'    => ['required','email'],
-            'password' => ['required','string'],
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'string'],
         ]);
-
         $user = User::where('email', $data['email'])->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {

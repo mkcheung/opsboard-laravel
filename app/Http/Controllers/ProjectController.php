@@ -14,11 +14,9 @@ class ProjectController extends Controller
     {
         $perPage = min($request->integer('page_size', 10), 100);
         $projects = Project::where('user_id', '=', $request->user()->id)->paginate($perPage);
-
         return response()->json([
             'data' => $projects
         ], 200);
-        return response()->json();
     }
 
     /**
