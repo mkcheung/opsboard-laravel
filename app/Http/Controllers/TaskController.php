@@ -81,12 +81,12 @@ class TaskController extends Controller
             'user_id' => $request->user()->id,
             'project_id' => $data['project_id'],
             'title' => $data['title'],
-            'description' => $data['description'],
+            'description' => ($data['description'] ?? null),
             'status' => $data['status'],
             'priority' => $data['priority'],
-            'due_date' => $data['due_date'],
-            'estimate_minutes' => $data['estimate_minutes'],
-            'completed_at' => $data['completed_at']
+            'due_date' => ($data['due_date'] ?? null),
+            'estimate_minutes' => ($data['estimate_minutes'] ?? null),
+            'completed_at' => ($data['completed_at'] ?? null)
         ]);
 
         return response()->json([
