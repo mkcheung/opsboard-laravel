@@ -8,9 +8,6 @@ use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $perPage = min($request->integer('page_size', 10), 100);
@@ -116,6 +113,14 @@ class TaskController extends Controller
 
         return response()->json([
             'data' => $task
+        ]);
+    }
+
+    public function getProjectRelatedTasks(Request $request, $id)
+    {
+        $tasks = Task::where('project_id', $id)->where('user_id', $request->user()->id)->get();
+        return response()->json([
+            'data' => $tasks
         ]);
     }
 
