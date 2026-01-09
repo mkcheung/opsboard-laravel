@@ -13,7 +13,7 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $perPage = min($request->integer('page_size', 10), 100);
-        $projects = Project::where('user_id', '=', $request->user()->id)->paginate($perPage);
+        $projects = Project::where('user_id', '=', $request->user()->id)->with('task')->paginate($perPage);
         return response()->json([
             'data' => $projects
         ], 200);
